@@ -29,7 +29,6 @@ namespace Rps.Ui
         private void MainWindow_Load(object sender, EventArgs e)
         {
             LoadSettings();
-            Shown += MainWindow_Shown;
         }
 
         private void btnMainMenu_Click(object sender, EventArgs e)
@@ -62,14 +61,16 @@ namespace Rps.Ui
             ProcessPlay(Shape.Scissors);
         }
 
-        private void MainWindow_Shown(Object sender, EventArgs e)
+        private void btnStartGame_Click(object sender, EventArgs e)
         {
-            // computer vs computer
-            this.ProcessComputerVsComputerAsyn().Wait();
+            ProcessComputerVsComputer();
+            btnStartGame.Enabled = false;
         }
 
         private void ProcessPlay(Shape shape = Shape.Unknown)
         {
+            this.ShapeButtons(false);
+
             Shape playerOneShape = _playService.Play(_screenSetting.PlayerOne, _counter, shape);
             pbPlayerOneOutput.Visible = true;
             pbPlayerOneOutput.ImageLocation = ImageLocator(playerOneShape);
@@ -121,7 +122,7 @@ namespace Rps.Ui
                 {
                     LoadSettings();
 
-                    ProcessComputerVsComputerAsyn().Wait();
+                    ProcessComputerVsComputer();
                 }
             }
             else
@@ -129,29 +130,8 @@ namespace Rps.Ui
                 Thread.Sleep(TimeSpan.FromSeconds(1));
 
                 this.HideResultArea();
+                this.ShapeButtons(true);
             }
-        }
-
-        private async Task ProcessComputerVsComputerAsyn()
-        {
-            Task result = null;
-
-            if (!_screenSetting.IsShapesEnabled)
-            {
-                result = Task.Factory.StartNew(() =>
-                {
-                    for (int i = 0; i < _screenSetting.Counter; i++)
-                    {
-                        Thread.Sleep(TimeSpan.FromSeconds(2));
-
-                        this.ProcessPlay();
-                    }
-                });
-
-                
-            }
-
-            await result;
         }
 
         private void LoadSettings()
@@ -173,6 +153,8 @@ namespace Rps.Ui
             // Computer vs Computer
             if (!_screenSetting.IsShapesEnabled)
             {
+                btnStartGame.Visible = true;
+                btnStartGame.Enabled = true;
                 HideShapeButtons();
             }
         }
@@ -190,6 +172,13 @@ namespace Rps.Ui
             btnPaper.Visible = false;
             btnRock.Visible = false;
             btnScissors.Visible = false;
+        }
+
+        private void ShapeButtons(bool enable)
+        {
+            btnPaper.Enabled = enable;
+            btnRock.Enabled = enable;
+            btnScissors.Enabled = enable;
         }
 
         private string ImageLocator(Shape shape)
@@ -210,6 +199,19 @@ namespace Rps.Ui
             }
 
             return imagePath;
+        }
+
+        private void ProcessComputerVsComputer()
+        {
+            if (!_screenSetting.IsShapesEnabled)
+            {
+                for (int i = 0; i < _screenSetting.Counter; i++)
+                {
+                    this.ProcessPlay();
+
+                    Thread.Sleep(TimeSpan.FromSeconds(2));
+                }
+            }
         }
     }
 }
